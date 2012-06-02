@@ -1,0 +1,48 @@
+<h1 class="header">Rank ur Itemz</h1>
+<hr></hr>
+
+<div class="msg"></div>
+<h1>File Upload</h1>
+<%= start_form_tag ({:action => 'uploadFile'}, 
+                        :multipart => true) %>
+<p><label for="upload_file">Select File</label> : 
+<%= file_field 'upload', 'datafile' %></p>
+<%= submit_tag "Upload" %>
+<%= end_form_tag %>
+
+<div class="items-table-div">
+</div>
+
+<div class="clear">&nbsp;</div>
+<div class="chart"></div>
+<div class="clear">&nbsp;</div>
+<div class="chart-ctrl">
+	<button class="plus-days">more days</button>
+	<button>less days</button>
+	<button>more items</button>
+	<button>less items</button>
+</div>
+
+<div class="clear">&nbsp;</div>
+<h1>point info</h1>
+	(<span id="x">0</span>, <span id="y">0</span>).
+
+<div class="clear">&nbsp;</div>
+<div id="graph_legend"></div>
+
+
+<script language="javascript" type="text/javascript">
+	$(document).ready(function(){
+		$('.msg').ajaxStart(function(){
+			console.log("starting up ajax calls");
+			$(this).text("loading page data...");
+			$(this).toggle();
+		});
+		$('.msg').ajaxStop(function(){
+			console.log("all pending ajax calls complete.");
+			$(this).text("done loading page data.");
+			$(this).toggle();
+		});
+
+  }
+</script>

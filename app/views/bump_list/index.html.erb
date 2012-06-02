@@ -1,0 +1,326 @@
+<h1 class="header">Rank ur Itemz</h1>
+<hr></hr>
+
+<div class="msg"></div>
+
+<div class="items-table-div">
+</div>
+
+<div class="clear">&nbsp;</div>
+<div class="chart"></div>
+<div class="clear">&nbsp;</div>
+<div class="chart-ctrl">
+	<button class="plus-days">more days</button>
+	<button>less days</button>
+	<button>more items</button>
+	<button>less items</button>
+</div>
+
+<div class="clear">&nbsp;</div>
+<h1>point info</h1>
+	(<span id="x">0</span>, <span id="y">0</span>).
+
+<div class="clear">&nbsp;</div>
+<div id="graph_legend"></div>
+
+
+<script language="javascript" type="text/javascript">
+	$(document).ready(function(){
+		$('.msg').ajaxStart(function(){
+			console.log("starting up ajax calls");
+			$(this).text("loading page data...");
+			$(this).toggle();
+		});
+		$('.msg').ajaxStop(function(){
+			console.log("all pending ajax calls complete.");
+			$(this).text("done loading page data.");
+			$(this).toggle();
+		});
+
+		registerButtons();
+		$.get("<%=url_for('/bump_list/list/0/' + @days)%>", function(html) {
+			 	$(".items-table-div").append(html);
+				$(".tablesorter").tablesorter({widthFixed: true, widgets: ['zebra']}).tablesorterPager({container: $(".pager")});
+				 // append the "ajax'd" data to the table body
+				// $("table tbody").append(html);
+				// let the plugin know that we made a update
+				//$("table").trigger("update");
+				// set sorting column and direction, this will sort on the first and third column
+				//var sorting = [[2,1],[0,0]];
+				// sort on the first column
+				//$("table").trigger("sorton",[sorting]);
+		});
+		renderChart();
+	});
+	var days = <%=@days%>
+	var num_to_rank = 100;
+	var out_of_rank = num_to_rank / 10;
+	var highlighted_color = '#202020';
+	var out_of_rank_color = '#f00';
+	var in_rank_color = '#c0c0c0';
+	var plot = undefined;
+
+	var bump_value_generator = function(){
+			var arr = [];
+			for (var j = 0; j <= num_to_rank; j++){
+		arr[j] = j;
+			}
+			return $.shuffle(arr);
+	}
+
+function renderChart(){
+	var dataSeries = new Array();
+	/**gen test data
+	var bump_on_day = new Array();
+	for(var k = 0; k <= days; k++){
+		bump_on_day.push(bump_value_generator());
+	}
+  for(var ii = 0; ii <= num_to_rank; ii += 1){
+		dataSeries[ii] = new Array();
+		for (var i = 0; i <= days; i += 1){
+			var bump_value = 0;
+			if(i == 0){
+				 bump_value = bump_on_day[i].shift();
+			}else{
+				//sometimes keep things the same
+				if(Math.random() >= .4){
+					bump_value = dataSeries[ii][i - 1][1];
+				}else{
+					bump_value = bump_on_day[i][0];//peek in the list
+					prev_value = dataSeries[ii][i - 1][1];
+				if(Math.abs(bump_value - prev_value)/num_to_rank >= .3){
+						//dont rerank across 30% threshold
+						bump_value = prev_value;
+				}else{
+						bump_value = bump_on_day[i].shift();
+				}
+				}
+			}
+	dataSeries[ii][i] = [i, bump_value];
+	}
+	}
+		**/
+
+
+ $.ajax({
+	url: "<%=url_for("/bump_list/list/0/" + @days + "?format=json")%>",
+	dataType: "json",
+	success: function(json_arr){
+		console.log("ajax data...");
+		console.log(json_arr[0]);
+		//for(var i = 0; i < data.length; i++){
+		//	console.log(data[i].ranked.item_name);
+		//}
+		var idx = 0;
+		for(var ii = 0; idx < json_arr.length; ii++){
+			dataSeries[ii] = new Array();
+			for(var jj = 0; jj <= days  && idx < json_arr.length; jj++, idx++){
+				//console.log("len=" + json_arr.length + " idx=" + idx);
+				dataSeries[ii][jj] = [ json_arr[idx].ranked.day, json_arr[idx].ranked.ranking ]
+			}
+		}
+    var x = num_to_rank;
+    var data = [];
+    for(jj = 0; jj <= dataSeries.length; jj++){
+			data[jj] = { label: json_arr[jj].ranked.item_name, data: dataSeries[jj], color: in_rank_color, threshold: { below: out_of_rank, color: out_of_rank_color }
+			};
+    }
+		console.log("dataseries");
+	  console.log(dataSeries);
+    plotWithOptions(data);
+	}
+});
+
+    console.log(dataSeries);
+    function plotWithOptions(data) {
+       var markings = [{ color:'#ccc', xaxis: { from: days }}];
+
+       plot = $.plot($(".chart"),
+			//, dataSeries
+			//,{ data: dataSeries[1], lines:{show:true} }
+			data,
+			{
+			lines:  { show:true, lineWidth: 1 },
+			points: { show:true  },
+			legend: { show:true, container: 'graph_legend', labelBoxBorderColor: '#000' },
+			y2axis: { min:1, max:num_to_rank, tickSize:1, tickFormatter: function(val, axis){
+							console.log("dataSeries[" + val + "] =" + dataSeries[val])
+							return dataSeries[val];
+			} },
+			yaxis: {
+				min: 1,
+				max: num_to_rank,
+				tickSize: 1,
+				tickFormatter: function(val, axis){
+					//console.log("in formatter: " + val);
+					//return dataSeries[val][0][0];
+					return transformRank(val);
+				}
+			}
+			, xaxis: { min: 0, max: days + 1, tickSize: 1,
+				tickFormatter: function(val, axis){
+					return transformDay(val)
+				} }
+			, x2axis: { min: 0, max: days + 1, tickSize: 1,
+				tickFormatter: function(val, axis){
+					return transformDay(val)
+			} },
+	    		grid: {
+			    //backgroundColor: { colors: ["#181818", "#484848"] },
+			    backgroundColor:  "#fff",
+			    clickable: true,
+			    hoverable: true,
+			    autoHighlight: true,
+			    borderWidth: 1,
+			    borderColor: '#383838',
+			    markings: markings
+			    }
+	    }
+	);
+    }
+
+
+    $(".chart").bind("plotclick", function (event, pos, item) {
+        console.log("You clicked at " + pos.x + ", " + pos.y);
+        if (item) {
+				changeLineColor(item);
+        }
+    });
+
+}
+
+	function showTooltip(x, y, contents) {
+		console.log("showing tool tip at " + x + " " + y);
+		var default_z = 90;
+			$('<div class="tooltip">' + contents + '</div>').css( {
+				position: 'absolute',
+				display: 'none',
+				top: y + 5,
+				left: x + 5,
+				border: '2px solid #fff',
+				padding: '2px',
+				width: '240px',
+				height: '75px',
+				overflow: 'hidden',
+				'background-color': '#000',
+				color: "#fff",
+				'z-index': default_z,
+		opacity: 0.80
+		}).appendTo(".chart").fadeIn(500);
+		$('.tooltip').hover(
+		function(){ console.log("hover in"); 
+			$(this).css({ 'z-index': 99, height: '125px', width: '275px', overflow: 'scroll' });
+		},
+		function(){ console.log("hover out"); 
+			$(this).css({ 'z-index': default_z, height: '75px', width: '240px', overflow: 'hidden'})
+		});
+	}
+
+   function changeLineColor(item){
+		console.log("You clicked a point! item.datapoint="+ item.datapoint);
+	  var series = plot.getData();
+	  if(series[item.seriesIndex].color != highlighted_color){
+		series[item.seriesIndex].color = highlighted_color;
+		toggleHighLightOnPoints(item, plot.highlight);
+		$(".tooltip").remove();
+		toggleToolTips(item);
+	  }else{
+		series[item.seriesIndex].color = in_rank_color;
+		toggleHighLightOnPoints(item, plot.unhighlight);
+		$(".tooltip").remove();
+	  }
+	  plot.draw();
+   }
+
+   function toggleHighLightOnPoints(item, fn){
+      for(var idx = 0; idx <= item.datapoint[0]; idx++){
+	  //console.log("toggling highlight on " + item.series + " " + idx);
+	  fn(item.series, idx);
+      }
+   }
+
+   function toggleToolTips(item){
+		var series = plot.getData();
+		var datapoints = series[item.seriesIndex].datapoints.points;
+		//console.log("datapoints");
+		//console.log(datapoints);
+		var label = series[item.seriesIndex].label;
+		for(var idx = 0; idx <= item.datapoint[0] * 2; idx += 2){
+			//console.log("toggling tool tip on " + item.series + " " + idx);
+			var xpos = datapoints[idx];
+			var ypos = datapoints[idx + 1];
+			var point = plot.pointOffset({ x: xpos, y: ypos })
+			//console.log(point.left + " " +point.top);
+			showTooltip(point.left, point.top,
+		 "<span>" + label + "</span><hr/><div>" + "ranked (" + transformRank(ypos) + ") " + transformDay(xpos)
+			   + "<p>Justifications:</p><span><a href='#'>cost Y</a><br><a href='#'>value X</a></span>"
+					+ "</div>");
+		}
+   }
+
+	function transformRank(val){
+		//console.log(val);
+		val = Math.abs(val - num_to_rank);
+		return val;
+	}
+
+	function transformDay(val){
+		//console.log(val);
+		newval = Math.abs(val - days);
+		if(val == days + 1){
+			return "tomorrow";
+		}else if(newval == 0){
+			return "today";
+		}else{
+			return newval + "days ago";
+		}
+	}
+
+	function registerButtons(){
+		var alertIt = function(){ alert($(this)); }
+		var lessDays = function(){
+			rechart(days - 1, num_to_rank);
+	  }
+	  var moreDays = function(){
+			rechart(days + 1, num_to_rank);
+		}
+		var lessItems = function(){
+			rechart(days, num_to_rank - 2);
+		}
+	  var moreItems = function(){
+			rechart(days, num_to_rank + 2);
+		}
+		var rechart = function(x, y){
+					days = x;
+					num_to_rank = y;
+					renderChart();
+			};
+		console.log("register buttons");
+		$(".plus-days")
+		.button( {
+				text: "More days",
+				icons: {
+					primary: "ui-icon-plus"
+				}
+			}).click(moreDays).next()
+		.button( {
+				text: "Less days",
+				icons: {
+					primary: "ui-icon-minus"
+				}
+			}).click(lessDays).next()
+		.button( {
+				text: "More items",
+				icons: {
+					primary: "ui-icon-plus"
+				}
+			}).click(moreItems).next()
+		.button( {
+				text: "Less items",
+				icons: {
+					primary: "ui-icon-minus"
+				}
+			}).click(lessItems)
+			.parent().buttonset();
+  }
+</script>

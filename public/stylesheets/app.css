@@ -1,0 +1,66 @@
+/* 
+    Document   : app
+    Created on : Jan 31, 2011, 10:36:00 PM
+    Author     : dmknopp
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/* 
+   TODO customize this sample style
+   Syntax recommendation http://www.w3.org/TR/REC-CSS2/
+*/
+
+root { 
+    display: block;
+}
+
+body{
+ 	font-family: Verdana;
+	font-size: 12px;
+}
+
+.clear{
+	clear: both;
+}
+
+.items-table-div{
+	width: 82%;
+	height: 500px;
+	margin: auto;
+	z-index:80;
+	overflow: auto;
+}
+
+.chart{
+	width: 85%;
+	height: 700px;
+	margin: auto;
+}
+
+.chart-ctrl{
+	width: 85%;
+	margin: auto;
+	font-size: 8px;
+}
+
+.msg{
+	width: 85%;
+	height: 100px;
+	overflow: auto;
+	margin: auto;
+	border: 1px solid black;
+	display:none;
+	z-index: 99;
+}
+
+.header{
+	color: #555;
+}
+
+.tooltip{
+}
+
+.tooltip a{
+	color: #fff;
+}

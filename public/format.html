@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <title>Format text</title>
+	<link type="text/css" rel="stylesheet" media="screen" href="/stylesheets/app.css"/>
+	<link type="text/css" rel="stylesheet" media="screen" href="/stylesheets/jquery-ui-1.8.9/css/eggplant/jquery-ui-1.8.9.custom.css"/>
+	<style type="text/css">
+		#content{
+			border: 1px solid black;
+		}
+		#formattedContent{
+			border: 1px dotted black;
+		}
+		.editMsg{
+			border: 0px solid black;
+		}
+		.letter{
+			color: black;
+			background: white;
+			font-size: 1.2em;
+		}
+		.letter-selected{
+			background: black;
+			color: white;
+			font-size: 1.2em;
+		}
+		.formatBar{
+			background: grey;
+			color: black;
+			border: 1px solid black;
+			width: 200px;
+			display:none;
+		}
+	</style>
+	<script src="/javascripts/jquery-latest.js"></script>
+	<script src="/javascripts/jquery-ui-1.8.9/js/jquery-ui-1.8.9.custom.min.js"></script>
+  </head>
+  <body>
+	  <div class="formatBar">
+		  <button id="undo">Undo</button>|
+		  <button id="formatBold">Bold</button>|
+		  <button id="formatList">List</button>|
+		  <button id="formatTable">Table</button>
+	  </div>
+	  <div><span>Edit</span><span class="toolbar">
+		  <button id="formatBtn">Format!</button><span class='editMsg'></span>
+		  </span>
+	  </div>
+	  <div id="formattedContent"></div>
+	  <div class="clear"></div>
+	  <hr/>
+	  <div id="content">
+		  <pre>
+		  HEADING
+
+
+		  Summary: yadda yadda
+		
+		  Text: This is a paragraph!
+
+		  Text Summary: yadda yadda in short form.
+
+		  Details!!! Lorem ipsum. Oh and fix my lists ishes.
+
+		  Where: here
+		  When: now
+		  How: With markdown
+		  Why: To fix my tables.
+
+		  +-------+--------------+
+		  | col1  | val1         |
+		  +-------|--------------+
+		  | row2 col1 | row2 val1|
+		  +-------|--------------+
+
+		  Finish up my text section.
+
+		  POC: Contact me! I am ur fav POC!
+		  </pre>
+	  </div>
+	  <script type="text/javascript">
+		  $(document).ready(function(){
+			console.log("onload");
+			if(typeof dmk == "undefined"){
+				dmk = {};
+			}
+			dmk.contentCssSelector = "#formattedContent";
+			dmk.undoSave = undefined;
+			dmk.selectedStartEle = undefined;
+			dmk.selectedEndEle = undefined;
+			dmk.inSelectionMode = false;
+			dmk.lastSelectedEle = undefined;
+
+			$("#formatBtn").button();
+			$(".formatBar button").button();
+			$("#formatBtn").click(function(){
+				console.log("formatting");
+				var str = $("#content > pre").text()
+				var html = "";
+				var spanStart = "<span class='letter'>";
+				var spanEnd = "</span>";
+				for(var ii = 0; ii <str.length; ii++){
+					if(str[ii] == ' '){
+						html += spanStart + "&nbsp;" + spanEnd;
+					}else if(str[ii] == '\n'){
+						html += spanStart + "<br/>" + spanEnd;
+					}else{
+						html += spanStart + str[ii] + spanEnd;
+					}
+				}
+				$("#formattedContent").html(html);
+				$(".letter").click(function(){
+					if(dmk.inSelectionMode){
+						dmk.selectedEndEle = this;
+						$('.editMsg').html("out of selection mode");
+						var position = $(dmk.selectedEndEle).position()  || { top: 0, left: 0 };
+						dmk.showFormatToolBar(position);
+						dmk.lastSelectedEle = undefined;
+						dmk.inSelectionMode = false;
+					}else{
+						dmk.selectedStartEle = this;
+						dmk.inSelectionMode = true;
+						$('.letter-selected').each(function(i,ele){
+							dmk.unselectText(ele);
+						});
+						$('.editMsg').html("in selection mode");
+						dmk.selectText(this);
+						$('.formatBar').hide();
+					}
+				});
+				$(".letter").mouseenter(function(){
+					if(dmk.inSelectionMode){
+						var stop = false;
+						var stopEle = this;
+						$(dmk.selectedStartEle).nextUntil($(this)).each(function(i, ele){
+							if(stop){
+								dmk.unselectText(ele);
+								return;
+						    }
+							if(stopEle == ele){
+								stop = true;
+							}
+							dmk.selectText(ele);
+						});
+						dmk.lastSelectedEle = this;
+					}else{
+						//$(this).effect('bounce', {}, 100);
+					}
+				});
+			});
+
+			dmk.unselectText = function(ele){
+				if($(ele).hasClass("letter-selected")){
+					$(ele).removeClass('letter-selected');
+				}
+				$(ele).addClass('letter');
+			};
+
+			dmk.selectText = function(ele){
+				if($(ele).hasClass("letter")){
+					$(ele).removeClass('letter');
+				}
+				$(ele).addClass('letter-selected');
+			};
+
+			dmk.showFormatToolBar = function(position){
+				var position = position  || { top: 0, left: 0 };
+				$(".formatBar").dialog( { title: "format bar", position: [ position.top, position.left] });
+			}
+
+			dmk.registerToolBarActions = function(contentCssSelector){
+				var saveStateForUndo = function(){
+					dmk.undoSave = $(contentCssSelector).clone();
+				};
+				var buildSelectedText = function(){
+					return $(".letter-selected").map(function(){ return $(this).html(); }).get();
+				};
+				$("#undo").click(function(){
+					console.log("undoing. last change was");
+					console.log(dmk.undoSave);
+					$(contentCssSelector).html(dmk.undoSave);
+					dmk.inSelectionMode = true;
+				});
+				$("#formatBold").click(function(){
+					saveStateForUndo();
+					var text = buildSelectedText().join("");
+					text = "<b>" + text + "</b>";
+					var wrapper = $("<span class='bold'></span>");
+					wrapper = $(".letter-selected").wrapAll(wrapper);
+					console.log("wrapper");
+					console.log($(wrapper).parent());
+					$(wrapper).parent().html(text);
+					dmk.inSelectionMode = false;
+					//$(".letter-selected").remove();
+					//$("span.bold > .letter-selected").html(text);
+					//$(dmk.selectedStartEle).nextUntil(dmk.selectedEndEle).each(function(i, ele){
+					//	dmk.unselectText(ele);
+					//	$(ele).unwrap();
+					//	console.log($(ele).text());
+					//});
+				});
+				$("#formatList").click(function(){
+					saveStateForUndo();
+					var text = buildSelectedText();
+					var listElements = "<li>";
+					for(var ii = 0; ii < text.length; ii++){
+						if(text[ii] == "<br>" || text[ii] == "</br>"){
+							listElements += "</li><li>";
+						}else{
+							listElements += text[ii];
+						}
+					}
+					listElements += "</li>";
+					var list = $("<ul></ul>").append(listElements);
+					var wrapper = $("<span class='list'></span>");
+					wrapper = $(".letter-selected").wrapAll(wrapper);
+					$(wrapper).parent().html(list);
+					dmk.inSelectionMode = false;
+				});
+				$("#formatTable").click(function(){
+					saveStateForUndo();
+					var text = buildSelectedText();
+					var rowElements = "<tr>";
+					for(var ii = 0; ii < text.length; ii++){
+						console.log(text[ii]);
+						if(text[ii] == "<br>" || text[ii] == "</br>"){
+						rowElements += "</tr><tr><td>";
+						}else if(text[ii] == '|'){
+							rowElements += "</td>";
+						}else{
+							rowElements += text[ii];
+						}
+					}
+					rowElements += "</tr>";
+					var table = $("<table></table>").append(rowElements);
+					var wrapper = $("<span class='table'></span>");
+					wrapper = $(".letter-selected").wrapAll(wrapper);
+					$(wrapper).parent().html(table);
+					dmk.inSelectionMode = false;
+				});
+			}
+
+			dmk.registerToolBarActions("#formattedContent");
+		  });
+	  </script>
+  </body>
+</html>

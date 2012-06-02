@@ -1,0 +1,28 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<title><%= @title %></title>
+
+		<%=stylesheet_link_tag "app" %>
+		<%=stylesheet_link_tag "jq" %>
+		<%=stylesheet_link_tag "jquery-ui-1.8.9/css/eggplant/jquery-ui-1.8.9.custom.css" %>
+		<%=stylesheet_link_tag "/javascripts/jquery-tablesorter-2.0.5/themes/blue/style.css" %>
+		<%=stylesheet_link_tag "/javascripts/jquery-tablesorter-2.0.5/addons/pager/jquery.tablesorter.pager.css" %>
+
+    <!--[if IE]><script language="javascript" type="text/javascript" src="<%=url_for('javascripts/flot/excanvas.min.js')%>"></script><![endif]-->
+    <%=javascript_include_tag "jquery-ui-1.8.9/js/jquery-1.4.4.min.js"%>
+    <%=javascript_include_tag "jquery-ui-1.8.9/js/jquery-ui-1.8.9.custom.min.js"%>
+    <%#=javascript_include_tag "flot/jquery.js"%>
+    <%=javascript_include_tag "flot/jquery.flot.js"%>
+    <%=javascript_include_tag "flot/jquery.flot.threshold.js"%>
+    <%=javascript_include_tag "jquery.shuffle.js"%>
+    <%=javascript_include_tag "jquery-tablesorter-2.0.5/jquery.tablesorter.min.js"%>
+		<%=javascript_include_tag "jquery-tablesorter-2.0.5/addons/pager/jquery.tablesorter.pager.js"%>
+	</head>
+	<body>
+		<%= yield %>
+
+	</body>
+</html>

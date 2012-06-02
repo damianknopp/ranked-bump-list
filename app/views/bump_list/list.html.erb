@@ -1,0 +1,26 @@
+<% jts_root = '/javascripts/jquery-tablesorter-2.0.5' %>
+<span class="pager">
+	<form>
+		<img src='<%= url_for("#{jts_root}/addons/pager/first.png") %>' class="first"/>
+		<img src='<%= url_for("#{jts_root}/addons/pager/prev.png")  %>' class="prev"/>
+		<input type="text" class="pagedisplay"/>
+		<img src='<%= url_for("#{jts_root}/addons/pager/next.png") %>' class="next"/>
+		<img src='<%= url_for("#{jts_root}/addons/pager/last.png") %>' class="last"/>
+		<select class="pagesize">
+			<option selected="selected"  value="10">10</option>
+			<option value="20">20</option>
+			<option value="30">30</option>
+			<option  value="40">40</option>
+		</select>
+	</form>
+</span>
+<span>Rank and metrics from day X</span>
+<table id="items-table" class="tablesorter">
+	<thead><tr><th>rank</th><th>item name</th><th>day</th></tr></thead>
+	<tfoot><tr><th>rank</th><th>item name</th><th>day</th></tr></tfoot>
+	<tbody>
+<%- @list.each do |l| -%>
+	<tr><td><%= l.ranking %></td><td><%= l.item_name %></td><td><%= l.day %> days ago</td></tr>
+<%- end -%>
+	</tbody>
+</table>

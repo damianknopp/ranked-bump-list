@@ -1,0 +1,2 @@
+module BumpListHelper
+end
